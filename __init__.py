@@ -10,11 +10,13 @@ from redis import Redis
 class Logist(object):
 
     def __init__(self):
+        self.log_list = []
         try:
-            config = json.loads(open("logist_config.json", 'r').read())
+            conf_string = open("logist_config.json", 'r').read()
+            config = json.loads(conf_string)
+            print(conf_string)
         except (IOError, ValueError):
-            print("Using default configurations.\n"
-                  "Create a logist_config.json for custom configuration.")
+            print("Using default configuration. For custom configuration create logist_config.json")
             config = {}
         self.REDIS_ADDRESS = config.get("REDIS_ADDRESS") or "localhost"
         self.REDIS_PORT = config.get("REDIS_PORT") or 6379
@@ -26,7 +28,7 @@ class Logist(object):
         self.COMPRESSION = config.get("COMPRESSION") or True
         self.redis_instance = Redis(host=self.REDIS_ADDRESS, port=self.REDIS_PORT)
 
-    def f_write(self, force=False):
+    def _f_write(self, force=False):
         if self.LOG_FOLDER:
             file_location = os.path.join(self.LOG_FOLDER, self.LOG_FILE_NAME)
         else:
@@ -38,19 +40,18 @@ class Logist(object):
         file_instance.write(redis_dump)
         file_instance.close()
         if os.path.getsize(file_location) > self.FILE_SIZE or force:
-            self.f_compress(file_location)
+            self._f_compress(file_location)
 
-    def m_write(self, log_type, sub_type, description, log_time=None):
+    def _m_write(self, log_type, sub_type, description, log_time=None):
         log_time = datetime.strftime(log_time or datetime.now(), "%Y-%m-%dT%H:%M:%SZ")
         self.redis_instance.lpush(self.NAMESPACE, "%s >< %s :: %s || %s" %
                                   (log_time, log_type, sub_type, description))
         if self.redis_instance.llen(self.NAMESPACE) >= self.FLUSH_COUNT:
-            self.f_write()
+            self._f_write()
 
-    def f_compress(self, file_location):
+    def _f_compress(self, file_location):
         count = 1
         log_file = file_location
-        print log_file
         while 1:
             file_name = "%s_%d" % (self.LOG_FILE_NAME, count)
             if self.COMPRESSION:
@@ -77,31 +78,74 @@ class Logist(object):
         return
 
     def log(self, log_type, sub_type, description, log_time=None):
-        self.m_write(log_type, sub_type, description, log_time)
+        self._m_write(log_type, sub_type, description, log_time)
 
     def error(self, sub_type, description, log_time=None):
-        self.m_write("ERROR", sub_type, description, log_time)
+        self._m_write("ERROR", sub_type, description, log_time)
 
     def warning(self, sub_type, description, log_time=None):
-        self.m_write("WARNING", sub_type, description, log_time)
+        self._m_write("WARNING", sub_type, description, log_time)
 
     def success(self, sub_type, description, log_time=None):
-        self.m_write("SUCCESS", sub_type, description, log_time)
+        self._m_write("SUCCESS", sub_type, description, log_time)
 
     def info(self, sub_type, description, log_time=None):
-        self.m_write("INFO", sub_type, description, log_time)
+        self._m_write("INFO", sub_type, description, log_time)
 
     def debug(self, sub_type, description, log_time=None):
-        self.m_write("DEBUG", sub_type, description, log_time)
+        self._m_write("DEBUG", sub_type, description, log_time)
 
-    def m_filter(self, log_type, sub_type="", description=""):
-        pass
+    def _analytics_bootstrap(self, source="memory"):
+        self.log_list = []
+        if source == "file":
+            log_source = open("filename.txt").readlines()
+        else:
+            log_source = self.redis_instance.lrange(self.NAMESPACE, 0, -1)
+        for log in log_source:
+            log_time = datetime.strptime(log.split(" ><")[0], "%Y-%m-%dT%H:%M:%SZ")
+            log_type = log.split(">< ")[1].split(" :: ")[0]
+            sub_type = log.split(":: ")[1].split(" || ")[0]
+            description = log.split("|| ")[1]
+            self.log_list.append([log_time, log_type, sub_type, description])
 
-    def f_filter(self, log_type, sub_type="", description=""):
-        pass
+    def m_filter(self, log_type="", sub_type="", description="", force_refresh=False):
+        if not self.log_list or force_refresh:
+            self._analytics_bootstrap()
+        filter_query = []
+        for log in self.log_list:
+            if log_type in log[1] or sub_type in log[2] or description in log[3]:
+                filter_query.append(log)
+        return filter_query
 
-    def m_count(self, ):
-        pass
+    def m_count(self, log_type="", sub_type="", description="", force_refresh=False):
+        if not self.log_list or force_refresh:
+            self._analytics_bootstrap()
+        filter_count = 0
+        for log in self.log_list:
+            if log_type == log[1] or sub_type == log[2] or description == log[3]:
+                filter_count += 1
+        return filter_count
 
-    def f_count(self, ):
-        pass
+    def f_filter(self, log_type, sub_type="", description="", force_refresh=False):
+        if not self.log_list or force_refresh:
+            self._analytics_bootstrap(source="file")
+        filter_query = []
+        for log in self.log_list:
+            if log_type in log[1] or sub_type in log[2] or description in log[3]:
+                filter_query.append(log)
+        return filter_query
+
+    def f_count(self, log_type, sub_type="", description="", force_refresh=False):
+        if not self.log_list or force_refresh:
+            self._analytics_bootstrap(source="file")
+        filter_count = 0
+        for log in self.log_list:
+            if log_type == log[1] or sub_type == log[2] or description == log[3]:
+                filter_count += 1
+        return filter_count
+
+    def count(self, log_type="", sub_type="", description="", force_refresh=False):
+        return self.m_count(log_type, sub_type, description, force_refresh)
+
+    def filter(self, log_type="", sub_type="", description="", force_refresh=False):
+        return self.m_filter(log_type, sub_type, description, force_refresh)
