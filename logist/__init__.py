@@ -13,15 +13,15 @@ class Logist(object):
     def __init__(self, redis_address="localhost", redis_port=6379, flush_count=10000, file_size=10000000,
                  log_file_name="default", log_folder="", namespace="DEFAULT", compression=True):
         """
-        :param redis_address:
-        :param redis_port:
-        :param flush_count:
-        :param file_size:
-        :param log_file_name:
-        :param log_folder:
-        :param namespace:
-        :param compression:
-        :return:
+        REDIS_ADDRESS: Address to redis server
+        REDIS_PORT: redis server port
+        FLUSH_COUNT: log count when in-memory logs to be flushed to file
+        FILE_SIZE: file size when log file to be split up and compressed
+        LOG_FILE_NAME: name of the log file
+        LOG_FOLDER: folder for log files
+        NAMESPACE: a custom namespace for logs to be kept in redis server
+        COMPRESSION: a boolean field to enable/disable compression (True/False)
+
         Override configuration file format
         logist_config.json
         {
@@ -235,7 +235,7 @@ class Logist(object):
             self._analytics_bootstrap()
         filter_query = []
         for log in self.log_list:
-            if (log_type and log_type == log[1]) or (sub_type and sub_type in log[2]) or \
+            if (log_type and log_type == log[1]) or (sub_type and sub_type == log[2]) or \
                     (description and description in log[3]):
                 filter_query.append(log)
         return filter_query
@@ -271,7 +271,7 @@ class Logist(object):
             self._analytics_bootstrap(source="file")
         filter_query = []
         for log in self.log_list:
-            if (log_type and log_type == log[1]) or (sub_type and sub_type in log[2]) or \
+            if (log_type and log_type == log[1]) or (sub_type and sub_type == log[2]) or \
                     (description and description in log[3]):
                 filter_query.append(log)
         return filter_query
