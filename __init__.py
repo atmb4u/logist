@@ -8,8 +8,31 @@ from redis import Redis
 
 
 class Logist(object):
-
-    def __init__(self):
+    def __init__(self, redis_address="localhost", redis_port=6379, flush_count=10000, file_size=10000000,
+                 log_file_name="default", log_folder="", namespace="DEFAULT", compression=True):
+        """
+        :param redis_address:
+        :param redis_port:
+        :param flush_count:
+        :param file_size:
+        :param log_file_name:
+        :param log_folder:
+        :param namespace:
+        :param compression:
+        :return:
+        Override configuration file format
+        logist_config.json
+        {
+            "REDIS_ADDRESS": "localhost",
+            "REDIS_PORT": 6379,
+            "FLUSH_COUNT": 10000,
+            "FILE_SIZE": 10000000,
+            "LOG_FILE_NAME": "",
+            "LOG_FOLDER": "",
+            "NAMESPACE": "PROJECT_NAME",
+            "COMPRESSION": true
+        }
+        """
         self.log_list = []
         try:
             conf_string = open("logist_config.json", 'r').read()
@@ -18,36 +41,52 @@ class Logist(object):
         except (IOError, ValueError):
             print("Using default configuration. For custom configuration create logist_config.json")
             config = {}
-        self.REDIS_ADDRESS = config.get("REDIS_ADDRESS") or "localhost"
-        self.REDIS_PORT = config.get("REDIS_PORT") or 6379
-        self.FLUSH_COUNT = config.get("FLUSH_COUNT") or 10000
-        self.FILE_SIZE = config.get("FILE_SIZE") or 1000000
-        self.LOG_FILE_NAME = config.get("LOG_FILE_NAME") or "default"
-        self.LOG_FOLDER = config.get("LOG_FOLDER")
-        self.NAMESPACE = config.get("NAMESPACE") or "LOGIST"
-        self.COMPRESSION = config.get("COMPRESSION") or True
+        self.REDIS_ADDRESS = config.get("REDIS_ADDRESS") or redis_address
+        self.REDIS_PORT = config.get("REDIS_PORT") or redis_port
+        self.FLUSH_COUNT = config.get("FLUSH_COUNT") or flush_count
+        self.FILE_SIZE = config.get("FILE_SIZE") or file_size
+        self.LOG_FILE_NAME = config.get("LOG_FILE_NAME") or log_file_name
+        self.LOG_FOLDER = config.get("LOG_FOLDER") or log_folder
+        self.NAMESPACE = config.get("NAMESPACE") or namespace
+        self.COMPRESSION = config.get("COMPRESSION") or compression
         self.redis_instance = Redis(host=self.REDIS_ADDRESS, port=self.REDIS_PORT)
 
-    def _f_write(self, force=False):
+    def _f_write(self, force_compress=False):
+        """
+        Private function to flush logs to file once memory reaches self.FLUSH_COUNT
+        :param force_compress: will forcefully create a new compressed file
+        :return:
+        """
         if self.LOG_FOLDER:
             file_location = os.path.join(self.LOG_FOLDER, self.LOG_FILE_NAME)
         else:
             file_location = self.LOG_FILE_NAME
         file_location = "%s.log" % file_location
         file_instance = open(file_location, "a")
-        redis_dump = "%s\n" % "\n". join(self.redis_instance.lrange(self.NAMESPACE, 0, -1))
+        redis_dump = "%s\n" % "\n".join(self.redis_instance.lrange(self.NAMESPACE, 0, -1))
         self.redis_instance.delete(self.NAMESPACE)
         file_instance.write(redis_dump)
         file_instance.close()
-        if os.path.getsize(file_location) > self.FILE_SIZE or force:
+        if os.path.getsize(file_location) > self.FILE_SIZE or force_compress:
             self._f_compress(file_location)
+        return
 
     def _m_write(self, log_type, sub_type, description, log_time=None):
+        """
+        Private function to write log to memory
+        if log count > FLUSH_COUNT defined in settings(default: 10000), dump logs to file
+        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param log_time: time of the logging - else auto populate
+        :return: None
+        """
         log_time = datetime.strftime(log_time or datetime.now(), "%Y-%m-%dT%H:%M:%SZ")
         self.redis_instance.lpush(self.NAMESPACE, "%s >< %s :: %s || %s" %
                                   (log_time, log_type, sub_type, description))
         if self.redis_instance.llen(self.NAMESPACE) >= self.FLUSH_COUNT:
             self._f_write()
+        return
 
     def _f_compress(self, file_location):
         count = 1
@@ -78,24 +117,79 @@ class Logist(object):
         return
 
     def log(self, log_type, sub_type, description, log_time=None):
+        """
+        Public function for generic logging
+        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param log_time: time of the logging - else auto populate
+        :return: None
+        """
         self._m_write(log_type, sub_type, description, log_time)
+        return
 
     def error(self, sub_type, description, log_time=None):
+        """
+        Public function for logging ERROR log type
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param log_time: time of the logging - else auto populate
+        :return: None
+        """
         self._m_write("ERROR", sub_type, description, log_time)
+        return
 
     def warning(self, sub_type, description, log_time=None):
+        """
+        Public function for logging WARNING log type
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param log_time: time of the logging - else auto populate
+        :return: None
+        """
         self._m_write("WARNING", sub_type, description, log_time)
+        return
 
     def success(self, sub_type, description, log_time=None):
+        """
+        Public function for logging SUCCESS log type
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param log_time: time of the logging - else auto populate
+        :return: None
+        """
         self._m_write("SUCCESS", sub_type, description, log_time)
+        return
 
     def info(self, sub_type, description, log_time=None):
+        """
+        Public function for logging INFO log type
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param log_time: time of the logging - else auto populate
+        :return: None
+        """
         self._m_write("INFO", sub_type, description, log_time)
+        return
 
     def debug(self, sub_type, description, log_time=None):
+        """
+        Public function for logging DEBUG log type
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param log_time: time of the logging - else auto populate
+        :return: None
+        """
         self._m_write("DEBUG", sub_type, description, log_time)
+        return
 
     def _analytics_bootstrap(self, source="memory"):
+        """
+        Private function for bootstrapping log entries
+        :param source: run analytics on logs in memory or in the last created file
+        :return: None
+        """
+        # TODO - analytics is not available over compressed files for now
         self.log_list = []
         if source == "file":
             log_source = open("filename.txt").readlines()
@@ -107,8 +201,18 @@ class Logist(object):
             sub_type = log.split(":: ")[1].split(" || ")[0]
             description = log.split("|| ")[1]
             self.log_list.append([log_time, log_type, sub_type, description])
+        return
 
-    def m_filter(self, log_type="", sub_type="", description="", force_refresh=False):
+    def _m_filter(self, log_type="", sub_type="", description="", force_refresh=False):
+        """
+        Private function to filter over the logs in memory using log_type, sub_type and description
+        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
+        :return: None
+        """
+        # TODO - needs to pass ranges of log time to filter logs
         if not self.log_list or force_refresh:
             self._analytics_bootstrap()
         filter_query = []
@@ -117,7 +221,15 @@ class Logist(object):
                 filter_query.append(log)
         return filter_query
 
-    def m_count(self, log_type="", sub_type="", description="", force_refresh=False):
+    def _m_count(self, log_type="", sub_type="", description="", force_refresh=False):
+        """
+        Private function to count the matching logs in memory with filters log_type, sub_type and description
+        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
+        :return: None
+        """
         if not self.log_list or force_refresh:
             self._analytics_bootstrap()
         filter_count = 0
@@ -126,7 +238,16 @@ class Logist(object):
                 filter_count += 1
         return filter_count
 
-    def f_filter(self, log_type, sub_type="", description="", force_refresh=False):
+    def _f_filter(self, log_type, sub_type="", description="", force_refresh=False):
+        """
+        Private function to filter over the logs in last created file using log_type, sub_type and description
+        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
+        :return: None
+        """
+        # TODO - needs to pass ranges of log time to filter logs
         if not self.log_list or force_refresh:
             self._analytics_bootstrap(source="file")
         filter_query = []
@@ -135,7 +256,15 @@ class Logist(object):
                 filter_query.append(log)
         return filter_query
 
-    def f_count(self, log_type, sub_type="", description="", force_refresh=False):
+    def _f_count(self, log_type, sub_type="", description="", force_refresh=False):
+        """
+        Private function to count the matching logs in last created file with filters log_type, sub_type and description
+        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
+        :return: None
+        """
         if not self.log_list or force_refresh:
             self._analytics_bootstrap(source="file")
         filter_count = 0
@@ -144,8 +273,32 @@ class Logist(object):
                 filter_count += 1
         return filter_count
 
-    def count(self, log_type="", sub_type="", description="", force_refresh=False):
-        return self.m_count(log_type, sub_type, description, force_refresh)
+    def count(self, log_type="", sub_type="", description="", log_location="memory", force_refresh=False):
+        """
+        Function to count the matching logs in last created file with filters log_type, sub_type and description
+        :param log_location: memory/file
+        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
+        :return: None
+        """
+        if log_location == "file":
+            return self._f_count(log_type, sub_type, description, force_refresh)
+        else:
+            return self._m_count(log_type, sub_type, description, force_refresh)
 
-    def filter(self, log_type="", sub_type="", description="", force_refresh=False):
-        return self.m_filter(log_type, sub_type, description, force_refresh)
+    def filter(self, log_type="", sub_type="", description="", log_location="memory", force_refresh=False):
+        """
+        Function to count the matching logs in last created file with filters log_type, sub_type and description
+        :param log_location: memory/file
+        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
+        :return: None
+        """
+        if log_location == "file":
+            return self._f_filter(log_type, sub_type, description, force_refresh)
+        else:
+            return self._m_filter(log_type, sub_type, description, force_refresh)
