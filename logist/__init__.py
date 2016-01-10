@@ -6,7 +6,7 @@ import shutil
 
 from redis import Redis
 
-__version__ = "0.9"
+__version__ = "0.91"
 
 
 class Logist(object):
@@ -210,7 +210,15 @@ class Logist(object):
         # TODO - analytics is not available over compressed files for now
         self.log_list = []
         if source == "file":
-            log_source = open("filename.txt").readlines()
+            if self.LOG_FOLDER:
+                file_name = "%s.log" % os.path.join(self.LOG_FOLDER, self.LOG_FILE_NAME)
+            else:
+                file_name = "%s.log" % self.LOG_FILE_NAME
+            try:
+                log_source = open(file_name).readlines()
+            except IOError:
+                print("File Not Found: %s" % file_name)
+                return 
         else:
             log_source = self.redis_instance.lrange(self.NAMESPACE, 0, -1)
         for log in log_source:
