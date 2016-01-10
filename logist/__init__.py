@@ -218,7 +218,7 @@ class Logist(object):
                 log_source = open(file_name).readlines()
             except IOError:
                 print("File Not Found: %s" % file_name)
-                return 
+                return
         else:
             log_source = self.redis_instance.lrange(self.NAMESPACE, 0, -1)
         for log in log_source:

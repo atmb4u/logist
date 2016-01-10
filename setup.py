@@ -9,5 +9,8 @@ setup(name='logist',
       author_email='atmb4u@gmail.com',
       license='BSD',
       packages=['logist'],
-      zip_safe=False, requires=['redis']
+      zip_safe=False, requires=['redis'],
+      install_requires=[
+          "redis"
+      ]
       )
