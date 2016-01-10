@@ -1,9 +1,11 @@
 Logist
 ------
 
-Easy logging system for humans and machines
+Easy logging for humans and machines
  
-A redis backed logging system with a performance of 6000 logs/second.
+```logging``` in standard library is wonderful. But if you want something simpler, 
+ready-to-use and blazing fast, ```Logist``` is for you! Logist is a redis backed logging system
+with a performance of 6000 logs/second.
  
  
 ## Documentation
@@ -30,34 +32,6 @@ logger.log(log_type, sub_type, description, log_time)
 
 **log_time:** time of the logging - else auto populate
 
-
-
-### Specific Functions
-
-#### Success
-```python
-logger.success("API_LOOKUP", "20301 bytes of json data served")
-```
-
-#### Warning
-```python
-logger.warning("API_LOOKUP", "301 bytes of json data served")
-```
-
-#### Info
-```python
-logger.info("API_LOOKUP", "20301 bytes of json data served")
-```
-
-#### Error
-```python
-logger.error("API_LOOKUP_ERROR", "0 bytes of json data served")
-```
-
-#### Debug
-```python
-logger.debug("API_LOOKUP_DEBUG", "2301 bytes of csv data served")
-```
 
 
 ### Configuration Options
@@ -95,6 +69,35 @@ create Logist objects with custom configuration options required as shown below
 logger = Logist(redis_address="localhost", redis_port=6379, flush_count=10000, file_size=10000000,
                  log_file_name="default", log_folder="", namespace="DEFAULT", compression=True)
 ```
+
+
+### Specific Functions
+
+#### Success
+```python
+logger.success("API_LOOKUP", "20301 bytes of json data served")
+```
+
+#### Warning
+```python
+logger.warning("API_LOOKUP", "301 bytes of json data served")
+```
+
+#### Info
+```python
+logger.info("API_LOOKUP", "20301 bytes of json data served")
+```
+
+#### Error
+```python
+logger.error("API_LOOKUP_ERROR", "0 bytes of json data served")
+```
+
+#### Debug
+```python
+logger.debug("API_LOOKUP_DEBUG", "2301 bytes of csv data served")
+```
+
 
 ### Advanced Features
 
