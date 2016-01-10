@@ -6,6 +6,8 @@ import shutil
 
 from redis import Redis
 
+__version__ = "0.9"
+
 
 class Logist(object):
     def __init__(self, redis_address="localhost", redis_port=6379, flush_count=10000, file_size=10000000,
@@ -37,7 +39,6 @@ class Logist(object):
         try:
             conf_string = open("logist_config.json", 'r').read()
             config = json.loads(conf_string)
-            print(conf_string)
         except (IOError, ValueError):
             print("Using default configuration. For custom configuration create logist_config.json")
             config = {}
@@ -70,6 +71,23 @@ class Logist(object):
         if os.path.getsize(file_location) > self.FILE_SIZE or force_compress:
             self._f_compress(file_location)
         return
+
+    def config(self):
+        """
+        Print the current configuration of the Logist class
+        :return: return conf object
+        """
+        conf = {
+            "REDIS_ADDRESS": self.REDIS_ADDRESS,
+            "REDIS_PORT": self.REDIS_PORT,
+            "FLUSH_COUNT": self.FLUSH_COUNT,
+            "FILE_SIZE": self.FILE_SIZE,
+            "LOG_FILE_NAME": self.LOG_FILE_NAME,
+            "LOG_FOLDER": self.LOG_FOLDER,
+            "NAMESPACE": self.NAMESPACE,
+            "COMPRESSION": self.COMPRESSION
+        }
+        return conf
 
     def _m_write(self, log_type, sub_type, description, log_time=None):
         """
@@ -217,7 +235,8 @@ class Logist(object):
             self._analytics_bootstrap()
         filter_query = []
         for log in self.log_list:
-            if log_type in log[1] or sub_type in log[2] or description in log[3]:
+            if (log_type and log_type == log[1]) or (sub_type and sub_type in log[2]) or \
+                    (description and description in log[3]):
                 filter_query.append(log)
         return filter_query
 
@@ -238,7 +257,7 @@ class Logist(object):
                 filter_count += 1
         return filter_count
 
-    def _f_filter(self, log_type, sub_type="", description="", force_refresh=False):
+    def _f_filter(self, log_type="", sub_type="", description="", force_refresh=False):
         """
         Private function to filter over the logs in last created file using log_type, sub_type and description
         :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
@@ -252,11 +271,12 @@ class Logist(object):
             self._analytics_bootstrap(source="file")
         filter_query = []
         for log in self.log_list:
-            if log_type in log[1] or sub_type in log[2] or description in log[3]:
+            if (log_type and log_type == log[1]) or (sub_type and sub_type in log[2]) or \
+                    (description and description in log[3]):
                 filter_query.append(log)
         return filter_query
 
-    def _f_count(self, log_type, sub_type="", description="", force_refresh=False):
+    def _f_count(self, log_type="", sub_type="", description="", force_refresh=False):
         """
         Private function to count the matching logs in last created file with filters log_type, sub_type and description
         :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
