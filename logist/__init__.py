@@ -71,7 +71,10 @@ class Logist(object):
         else:
             file_location = self.LOG_FILE_NAME
         file_location = "%s.log" % file_location
-        file_instance = open(file_location, "a")
+        try:
+            file_instance = open(file_location, "a")
+        except IOError:
+            print("Cannot open file: %s" % file_location)
         redis_dump = "%s\n" % "\n".join(self.redis_instance.lrange(self.NAMESPACE, 0, -1))
         self.redis_instance.delete(self.NAMESPACE)
         file_instance.write(redis_dump)
