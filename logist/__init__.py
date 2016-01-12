@@ -4,9 +4,12 @@ from datetime import datetime
 import gzip
 import shutil
 
-from redis import Redis
+try:
+    from redis import Redis, ConnectionError
+except ImportError:
+    print "Redis is not Installed"
 
-__version__ = "0.94"
+__version__ = "0.95"
 
 
 class Logist(object):
@@ -52,6 +55,10 @@ class Logist(object):
         self.NAMESPACE = config.get("NAMESPACE") or namespace
         self.COMPRESSION = config.get("COMPRESSION") or compression
         self.redis_instance = Redis(host=self.REDIS_ADDRESS, port=self.REDIS_PORT)
+        try:
+            self.redis_instance.ping()
+        except ConnectionError:
+            print "Not able to connect to redis.\nPlease install/start redis before proceeding."
 
     def _f_write(self, force_compress=False):
         """
