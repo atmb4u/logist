@@ -16,6 +16,9 @@ Logist is a redis backed logging system with a performance of
 ```bash
 pip install logist
 ```
+
+You need to have ```redis server``` installed and running. 
+More info: [http://redis.io/](http://redis.io/) 
     
 ### Basic Usage
 
