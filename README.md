@@ -35,8 +35,38 @@ logger.log(log_type, sub_type, description, log_time)
 **log_time:** time of the logging - else auto populate
 
 
+## Specific Functions
 
-### Configuration Options
+#### Success
+```python
+logger.success("API_LOOKUP", "20301 bytes of json data served")
+```
+
+#### Warning
+```python
+logger.warning("API_LOOKUP", "301 bytes of json data served")
+```
+
+#### Info
+```python
+logger.info("API_LOOKUP", "20301 bytes of json data served")
+```
+
+#### Error
+```python
+logger.error("API_LOOKUP_ERROR", "0 bytes of json data served")
+```
+
+#### Debug
+```python
+logger.debug("API_LOOKUP_DEBUG", "2301 bytes of csv data served")
+```
+
+
+
+
+## Configuration Options
+
 
 REDIS_ADDRESS: Address to redis server
 
@@ -83,36 +113,7 @@ logger = Logist(redis_address="localhost", redis_port=6379,
     namespace="DEFAULT", compression=True)
 ```
 
-
-### Specific Functions
-
-#### Success
-```python
-logger.success("API_LOOKUP", "20301 bytes of json data served")
-```
-
-#### Warning
-```python
-logger.warning("API_LOOKUP", "301 bytes of json data served")
-```
-
-#### Info
-```python
-logger.info("API_LOOKUP", "20301 bytes of json data served")
-```
-
-#### Error
-```python
-logger.error("API_LOOKUP_ERROR", "0 bytes of json data served")
-```
-
-#### Debug
-```python
-logger.debug("API_LOOKUP_DEBUG", "2301 bytes of csv data served")
-```
-
-
-### Advanced Features
+## Advanced Features
 
 #### Filter
 
