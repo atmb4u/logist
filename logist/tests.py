@@ -15,6 +15,8 @@ for log in xrange(log_count):
     l.log(log_type, log_sub_type, description)
 time_delta = datetime.now() - start
 print("Benchmark\n%d requests in %s\n %f logs/second" % (log_count, time_delta, log_count/time_delta.seconds))
+print(l.count(log_source="file", date_from=datetime(2016, 1, 2), sub_type="ACCESS", log_type="ERROR"))
+print(l.count(log_source="memory", date_from=datetime(2016, 1, 2), sub_type="EDIT", log_type="INFO"))
 
 
 # TODO - tests for compression switch, memory/file switch, filters, count
