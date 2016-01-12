@@ -1,41 +1,45 @@
 <!DOCTYPE html>
 <html>
+
   <head>
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+    <meta name="description" content="Logist : Easy logging for humans and machines">
 
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-    <title>Logist by atmb4u</title>
+    <title>Logist</title>
   </head>
 
   <body>
-    <header>
-      <div class="inner">
-        <h1>Logist</h1>
-        <h2>Easy logging for humans and machines</h2>
-        <a href="https://github.com/atmb4u/logist" class="button"><small>View project on</small> GitHub</a>
-      </div>
-    </header>
 
-    <div id="content-wrapper">
-      <div class="inner clearfix">
-        <section id="main-content">
-          <h2>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/atmb4u/logist">View on GitHub</a>
+
+          <h1 id="project_title">Logist</h1>
+          <h2 id="project_tagline">Easy logging for humans and machines</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/atmb4u/logist/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/atmb4u/logist/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h2>
 <a id="logist" class="anchor" href="#logist" aria-hidden="true"><span class="octicon octicon-link"></span></a>Logist</h2>
 
 <p>Easy logging for humans and machines</p>
 
-<p><code>logging</code> in standard library is wonderful. But if you want something simpler, 
-ready-to-use and blazing fast, <code>Logist</code> is for you! Logist is a redis backed logging system
-with a performance of 6000 logs/second.</p>
+<p><code>logging</code> in standard library is wonderful. But if you want 
+something simpler, ready-to-use and blazing fast, <code>Logist</code> is for you! 
+Logist is a redis backed logging system with a performance of 
+6000 logs/second.</p>
 
 <h2>
 <a id="documentation" class="anchor" href="#documentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Documentation</h2>
@@ -54,46 +58,18 @@ logger.log(log_type, sub_type, description, log_time)</pre></div>
 
 <p><strong>log_type:</strong> type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG</p>
 
-<p><strong>sub_type:</strong> custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE</p>
+<p><strong>sub_type:</strong> custom log sub types for easy tracking </p>
+
+<ul>
+<li>Eg: ACCESS, WRITE, READ, EDIT, DELETE</li>
+</ul>
 
 <p><strong>description:</strong> brief log description</p>
 
 <p><strong>log_time:</strong> time of the logging - else auto populate</p>
 
-<h3>
-<a id="configuration-options" class="anchor" href="#configuration-options" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuration Options</h3>
-
-<p>REDIS_ADDRESS: Address to redis server
-REDIS_PORT: redis server port
-FLUSH_COUNT: log count when in-memory logs to be flushed to file
-FILE_SIZE: file size when log file to be split up and compressed
-LOG_FILE_NAME: name of the log file
-LOG_FOLDER: folder for log files
-NAMESPACE: a custom namespace for logs to be kept in redis server
-COMPRESSION: a boolean field to enable/disable compression (True/False)</p>
-
-<p>Either, create a configuration file with name <code>logist_config.json</code> in the pwd, like below</p>
-
-<div class="highlight highlight-source-json"><pre>{
-    <span class="pl-s"><span class="pl-pds">"</span>REDIS_ADDRESS<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>localhost<span class="pl-pds">"</span></span>,
-    <span class="pl-s"><span class="pl-pds">"</span>REDIS_PORT<span class="pl-pds">"</span></span>: <span class="pl-c1">6379</span>,
-    <span class="pl-s"><span class="pl-pds">"</span>FLUSH_COUNT<span class="pl-pds">"</span></span>: <span class="pl-c1">10000</span>,
-    <span class="pl-s"><span class="pl-pds">"</span>FILE_SIZE<span class="pl-pds">"</span></span>: <span class="pl-c1">10000000</span>,
-    <span class="pl-s"><span class="pl-pds">"</span>LOG_FILE_NAME<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>,
-    <span class="pl-s"><span class="pl-pds">"</span>LOG_FOLDER<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>,
-    <span class="pl-s"><span class="pl-pds">"</span>NAMESPACE<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>PROJECT_NAME<span class="pl-pds">"</span></span>,
-    <span class="pl-s"><span class="pl-pds">"</span>COMPRESSION<span class="pl-pds">"</span></span>: <span class="pl-c1">true</span>
-}</pre></div>
-
-<p>or</p>
-
-<p>create Logist objects with custom configuration options required as shown below</p>
-
-<div class="highlight highlight-source-python"><pre>logger <span class="pl-k">=</span> Logist(<span class="pl-smi">redis_address</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>localhost<span class="pl-pds">"</span></span>, <span class="pl-smi">redis_port</span><span class="pl-k">=</span><span class="pl-c1">6379</span>, <span class="pl-smi">flush_count</span><span class="pl-k">=</span><span class="pl-c1">10000</span>, <span class="pl-smi">file_size</span><span class="pl-k">=</span><span class="pl-c1">10000000</span>,
-                 <span class="pl-smi">log_file_name</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>default<span class="pl-pds">"</span></span>, <span class="pl-smi">log_folder</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">namespace</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>DEFAULT<span class="pl-pds">"</span></span>, <span class="pl-smi">compression</span><span class="pl-k">=</span><span class="pl-c1">True</span>)</pre></div>
-
-<h3>
-<a id="specific-functions" class="anchor" href="#specific-functions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Specific Functions</h3>
+<h2>
+<a id="specific-functions" class="anchor" href="#specific-functions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Specific Functions</h2>
 
 <h4>
 <a id="success" class="anchor" href="#success" aria-hidden="true"><span class="octicon octicon-link"></span></a>Success</h4>
@@ -120,46 +96,87 @@ COMPRESSION: a boolean field to enable/disable compression (True/False)</p>
 
 <div class="highlight highlight-source-python"><pre>logger.debug(<span class="pl-s"><span class="pl-pds">"</span>API_LOOKUP_DEBUG<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>2301 bytes of csv data served<span class="pl-pds">"</span></span>)</pre></div>
 
-<h3>
-<a id="advanced-features" class="anchor" href="#advanced-features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Advanced Features</h3>
+<h2>
+<a id="configuration-options" class="anchor" href="#configuration-options" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuration Options</h2>
+
+<p>REDIS_ADDRESS: Address to redis server</p>
+
+<p>REDIS_PORT: redis server port</p>
+
+<p>FLUSH_COUNT: log count when in-memory logs to be flushed to file</p>
+
+<p>FILE_SIZE: file size when log file to be split up and compressed</p>
+
+<p>LOG_FILE_NAME: name of the log file</p>
+
+<p>LOG_FOLDER: folder for log files</p>
+
+<p>NAMESPACE: a custom namespace for logs to be kept in redis server</p>
+
+<p>COMPRESSION: a boolean field to enable/disable compression (True/False)</p>
+
+<p>Either, create a configuration file with name <code>logist_config.json</code> 
+in the pwd, like below</p>
+
+<div class="highlight highlight-source-json"><pre>{
+    <span class="pl-s"><span class="pl-pds">"</span>REDIS_ADDRESS<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>localhost<span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>REDIS_PORT<span class="pl-pds">"</span></span>: <span class="pl-c1">6379</span>,
+    <span class="pl-s"><span class="pl-pds">"</span>FLUSH_COUNT<span class="pl-pds">"</span></span>: <span class="pl-c1">10000</span>,
+    <span class="pl-s"><span class="pl-pds">"</span>FILE_SIZE<span class="pl-pds">"</span></span>: <span class="pl-c1">10000000</span>,
+    <span class="pl-s"><span class="pl-pds">"</span>LOG_FILE_NAME<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>LOG_FOLDER<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>NAMESPACE<span class="pl-pds">"</span></span>: <span class="pl-s"><span class="pl-pds">"</span>PROJECT_NAME<span class="pl-pds">"</span></span>,
+    <span class="pl-s"><span class="pl-pds">"</span>COMPRESSION<span class="pl-pds">"</span></span>: <span class="pl-c1">true</span>
+}</pre></div>
+
+<p>or</p>
+
+<p>create Logist objects with custom configuration options required 
+as shown below</p>
+
+<div class="highlight highlight-source-python"><pre>logger <span class="pl-k">=</span> Logist(<span class="pl-smi">redis_address</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>localhost<span class="pl-pds">"</span></span>, <span class="pl-smi">redis_port</span><span class="pl-k">=</span><span class="pl-c1">6379</span>, 
+    <span class="pl-smi">flush_count</span><span class="pl-k">=</span><span class="pl-c1">10000</span>, <span class="pl-smi">file_size</span><span class="pl-k">=</span><span class="pl-c1">10000000</span>,
+    <span class="pl-smi">log_file_name</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>default<span class="pl-pds">"</span></span>, <span class="pl-smi">log_folder</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, 
+    <span class="pl-smi">namespace</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>DEFAULT<span class="pl-pds">"</span></span>, <span class="pl-smi">compression</span><span class="pl-k">=</span><span class="pl-c1">True</span>)</pre></div>
+
+<h2>
+<a id="advanced-features" class="anchor" href="#advanced-features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Advanced Features</h2>
 
 <h4>
 <a id="filter" class="anchor" href="#filter" aria-hidden="true"><span class="octicon octicon-link"></span></a>Filter</h4>
 
-<p>Advanced feature to filter logs as required based on log_type, sub_type, description and log_location.
-force_refresh is used to reload the index from the source file/memory</p>
+<p>Advanced feature to filter logs as required based on log_type, 
+sub_type, description and log_location. force_refresh is used to 
+reload the index from the source file/memory</p>
 
-<div class="highlight highlight-source-python"><pre>logger.filter(<span class="pl-smi">log_type</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">sub_type</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">description</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">log_location</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>memory<span class="pl-pds">"</span></span>, <span class="pl-smi">force_refresh</span><span class="pl-k">=</span><span class="pl-c1">False</span>)</pre></div>
+<div class="highlight highlight-source-python"><pre>logger.filter(<span class="pl-smi">log_source</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>memory<span class="pl-pds">"</span></span>, <span class="pl-smi">date_from</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">date_to</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, 
+    <span class="pl-smi">log_type</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">sub_type</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">description</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">force_refresh</span><span class="pl-k">=</span><span class="pl-c1">False</span>)</pre></div>
 
-<p>NB: Exact match for <code>log_type</code> and <code>sub_type</code>. Contains for <code>description</code></p>
+<p>Matches if <code>description</code>, <code>log_type</code> and <code>sub_type</code> 
+contains the particular string. <code>date_from</code> and <code>date_to</code> 
+are datetime objects for filtering</p>
 
 <h4>
 <a id="count" class="anchor" href="#count" aria-hidden="true"><span class="octicon octicon-link"></span></a>Count</h4>
 
-<p>Advanced feature to filter logs as required based on log_type, sub_type, description and log_location.
-force_refresh is used to reload the index from the source file/memory</p>
+<p>Advanced feature to filter logs as required based on log_type, 
+sub_type, description and log_location. force_refresh is used to 
+reload the index from the source file/memory</p>
 
-<div class="highlight highlight-source-python"><pre>logger.count(<span class="pl-smi">log_type</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">sub_type</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">description</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">log_location</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>memory<span class="pl-pds">"</span></span>, <span class="pl-smi">force_refresh</span><span class="pl-k">=</span><span class="pl-c1">False</span>)</pre></div>
-        </section>
-
-        <aside id="sidebar">
-          <a href="https://github.com/atmb4u/logist/zipball/master" class="button">
-            <small>Download</small>
-            .zip file
-          </a>
-          <a href="https://github.com/atmb4u/logist/tarball/master" class="button">
-            <small>Download</small>
-            .tar.gz file
-          </a>
-
-          <p class="repo-owner"><a href="https://github.com/atmb4u/logist"></a> is maintained by <a href="https://github.com/atmb4u">atmb4u</a>.</p>
-
-          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
-        </aside>
-      </div>
+<div class="highlight highlight-source-python"><pre>logger.count(<span class="pl-smi">log_source</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>memory<span class="pl-pds">"</span></span>, <span class="pl-smi">date_from</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">date_to</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">log_type</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, 
+    <span class="pl-smi">sub_type</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">description</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>, <span class="pl-smi">log_location</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>memory<span class="pl-pds">"</span></span>, <span class="pl-smi">force_refresh</span><span class="pl-k">=</span><span class="pl-c1">False</span>)</pre></div>
+      </section>
     </div>
 
-            <script type="text/javascript">
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Logist maintained by <a href="https://github.com/atmb4u">atmb4u</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
             var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
             document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
           </script>
@@ -169,6 +186,7 @@ force_refresh is used to reload the index from the source file/memory</p>
             pageTracker._trackPageview();
             } catch(err) {}
           </script>
+
 
   </body>
 </html>
