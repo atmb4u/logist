@@ -6,7 +6,7 @@ import shutil
 
 from redis import Redis
 
-__version__ = "0.92"
+__version__ = "0.94"
 
 
 class Logist(object):
@@ -36,6 +36,7 @@ class Logist(object):
         }
         """
         self.log_list = []
+        self.log_list_type = ""
         try:
             conf_string = open("logist_config.json", 'r').read()
             config = json.loads(conf_string)
@@ -210,6 +211,7 @@ class Logist(object):
         # TODO - analytics is not available over compressed files for now
         self.log_list = []
         if source == "file":
+            self.log_list_type = "file"
             if self.LOG_FOLDER:
                 file_name = "%s.log" % os.path.join(self.LOG_FOLDER, self.LOG_FILE_NAME)
             else:
@@ -220,6 +222,7 @@ class Logist(object):
                 print("File Not Found: %s" % file_name)
                 return
         else:
+            self.log_list_type = "memory"
             log_source = self.redis_instance.lrange(self.NAMESPACE, 0, -1)
         for log in log_source:
             log_time = datetime.strptime(log.split(" ><")[0], "%Y-%m-%dT%H:%M:%SZ")
@@ -229,7 +232,7 @@ class Logist(object):
             self.log_list.append([log_time, log_type, sub_type, description])
         return
 
-    def _m_filter(self, log_type="", sub_type="", description="", force_refresh=False):
+    def _filter(self, source, date_from="", date_to="", log_type="", sub_type="", description="", force_refresh=False):
         """
         Private function to filter over the logs in memory using log_type, sub_type and description
         :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
@@ -238,17 +241,24 @@ class Logist(object):
         :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
         :return: None
         """
-        # TODO - needs to pass ranges of log time to filter logs
-        if not self.log_list or force_refresh:
+        if (not(self.log_list and self.log_list_type == "file") and source == "file") or\
+                (source == "file" and force_refresh):
+            self._analytics_bootstrap(source="file")
+        if (not(self.log_list and self.log_list_type == "memory") and source == "memory") or \
+                (source == "memory" and force_refresh):
             self._analytics_bootstrap()
+        if not date_to:
+            date_to = datetime.now()
+        if not date_from:
+            date_from = datetime.fromtimestamp(0)
         filter_query = []
         for log in self.log_list:
-            if (log_type and log_type == log[1]) or (sub_type and sub_type == log[2]) or \
-                    (description and description in log[3]):
+            if (log_type in log[1] and sub_type in log[2] and description in log[3]) \
+                    and (date_from < log[0] < date_to):
                 filter_query.append(log)
         return filter_query
 
-    def _m_count(self, log_type="", sub_type="", description="", force_refresh=False):
+    def _count(self, source, date_from="", date_to="", log_type="", sub_type="", description="", force_refresh=False):
         """
         Private function to count the matching logs in memory with filters log_type, sub_type and description
         :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
@@ -257,76 +267,51 @@ class Logist(object):
         :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
         :return: None
         """
+        if (not(self.log_list and self.log_list_type == "file") and source == "file") or\
+                (source == "file" and force_refresh):
+            self._analytics_bootstrap(source="file")
+        if (not(self.log_list and self.log_list_type == "memory") and source == "memory") or \
+                (source == "memory" and force_refresh):
+            self._analytics_bootstrap()
+        if not date_to:
+            date_to = datetime.now()
+        if not date_from:
+            date_from = datetime.fromtimestamp(0)
         if not self.log_list or force_refresh:
             self._analytics_bootstrap()
         filter_count = 0
         for log in self.log_list:
-            if log_type == log[1] or sub_type == log[2] or description == log[3]:
+            if (log_type in log[1] and sub_type in log[2] and description in log[3]) \
+                    and (date_from < log[0] < date_to):
                 filter_count += 1
         return filter_count
 
-    def _f_filter(self, log_type="", sub_type="", description="", force_refresh=False):
-        """
-        Private function to filter over the logs in last created file using log_type, sub_type and description
-        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
-        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
-        :param description: brief log description
-        :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
-        :return: None
-        """
-        # TODO - needs to pass ranges of log time to filter logs
-        if not self.log_list or force_refresh:
-            self._analytics_bootstrap(source="file")
-        filter_query = []
-        for log in self.log_list:
-            if (log_type and log_type == log[1]) or (sub_type and sub_type == log[2]) or \
-                    (description and description in log[3]):
-                filter_query.append(log)
-        return filter_query
-
-    def _f_count(self, log_type="", sub_type="", description="", force_refresh=False):
-        """
-        Private function to count the matching logs in last created file with filters log_type, sub_type and description
-        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
-        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
-        :param description: brief log description
-        :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
-        :return: None
-        """
-        if not self.log_list or force_refresh:
-            self._analytics_bootstrap(source="file")
-        filter_count = 0
-        for log in self.log_list:
-            if log_type == log[1] or sub_type == log[2] or description == log[3]:
-                filter_count += 1
-        return filter_count
-
-    def count(self, log_type="", sub_type="", description="", log_location="memory", force_refresh=False):
+    def count(self, date_from="", date_to="", log_type="", sub_type="", description="", log_source="memory",
+              force_refresh=False):
         """
         Function to count the matching logs in last created file with filters log_type, sub_type and description
-        :param log_location: memory/file
+        :param date_to: filter logs till date_to - datetime object
+        :param date_from: filter logs till date_from - datetime object
+        :param log_source: memory/file
         :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
         :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
         :param description: brief log description
         :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
         :return: None
         """
-        if log_location == "file":
-            return self._f_count(log_type, sub_type, description, force_refresh)
-        else:
-            return self._m_count(log_type, sub_type, description, force_refresh)
+        return self._count(log_source, date_from, date_to, log_type, sub_type, description, force_refresh)
 
-    def filter(self, log_type="", sub_type="", description="", log_location="memory", force_refresh=False):
+    def filter(self, date_from="", date_to="", log_type="", sub_type="", description="", log_source="memory",
+               force_refresh=False):
         """
         Function to count the matching logs in last created file with filters log_type, sub_type and description
-        :param log_location: memory/file
+        :param date_to: filter logs till date_to - datetime object
+        :param date_from: filter logs till date_from - datetime object
+        :param log_source: memory/file
         :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
         :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
         :param description: brief log description
         :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
         :return: None
         """
-        if log_location == "file":
-            return self._f_filter(log_type, sub_type, description, force_refresh)
-        else:
-            return self._m_filter(log_type, sub_type, description, force_refresh)
+        return self._filter(log_source, date_from, date_to, log_type, sub_type, description, force_refresh)
