@@ -8,6 +8,7 @@ try:
     from redis import Redis, ConnectionError
 except ImportError:
     print "Redis is not Installed"
+    exit()
 
 __version__ = "0.95"
 
@@ -16,6 +17,7 @@ class Logist(object):
     def __init__(self, redis_address="localhost", redis_port=6379, flush_count=10000, file_size=10000000,
                  log_file_name="default", log_folder="", namespace="DEFAULT", compression=True):
         """
+        # TODO : use memory instead of redis
         REDIS_ADDRESS: Address to redis server
         REDIS_PORT: redis server port
         FLUSH_COUNT: log count when in-memory logs to be flushed to file
@@ -38,6 +40,7 @@ class Logist(object):
             "COMPRESSION": true
         }
         """
+        # TODO : use memory instead of redis
         self.log_list = []
         self.log_list_type = ""
         try:
@@ -62,9 +65,8 @@ class Logist(object):
 
     def _f_write(self, force_compress=False):
         """
-        Private function to flush logs to file once memory reaches self.FLUSH_COUNT
+        Private function to flush logs to file once redis reaches self.FLUSH_COUNT
         :param force_compress: will forcefully create a new compressed file
-        :return:
         """
         if self.LOG_FOLDER:
             file_location = os.path.join(self.LOG_FOLDER, self.LOG_FILE_NAME)
@@ -102,7 +104,7 @@ class Logist(object):
 
     def _m_write(self, log_type, sub_type, description, log_time=None):
         """
-        Private function to write log to memory
+        Private function to write log to redis
         if log count > FLUSH_COUNT defined in settings(default: 10000), dump logs to file
         :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
         :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
@@ -212,10 +214,10 @@ class Logist(object):
         self._m_write("DEBUG", sub_type, description, log_time)
         return
 
-    def _analytics_bootstrap(self, source="memory"):
+    def _analytics_bootstrap(self, source="redis"):
         """
         Private function for bootstrapping log entries
-        :param source: run analytics on logs in memory or in the last created file
+        :param source: run analytics on logs in redis or in the last created file
         :return: None
         """
         # TODO - analytics is not available over compressed files for now
@@ -232,7 +234,7 @@ class Logist(object):
                 print("File Not Found: %s" % file_name)
                 return
         else:
-            self.log_list_type = "memory"
+            self.log_list_type = "redis"
             log_source = self.redis_instance.lrange(self.NAMESPACE, 0, -1)
         for log in log_source:
             log_time = datetime.strptime(log.split(" ><")[0], "%Y-%m-%dT%H:%M:%SZ")
@@ -244,18 +246,18 @@ class Logist(object):
 
     def _filter(self, source, date_from="", date_to="", log_type="", sub_type="", description="", force_refresh=False):
         """
-        Private function to filter over the logs in memory using log_type, sub_type and description
+        Private function to filter over the logs in redis using log_type, sub_type and description
         :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
         :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
         :param description: brief log description
-        :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
+        :param force_refresh: refresh cached log list in redis calling _analytics_bootstrap()
         :return: None
         """
         if (not(self.log_list and self.log_list_type == "file") and source == "file") or\
                 (source == "file" and force_refresh):
             self._analytics_bootstrap(source="file")
-        if (not(self.log_list and self.log_list_type == "memory") and source == "memory") or \
-                (source == "memory" and force_refresh):
+        if (not(self.log_list and self.log_list_type == "redis") and source == "redis") or \
+                (source == "redis" and force_refresh):
             self._analytics_bootstrap()
         if not date_to:
             date_to = datetime.now()
@@ -270,18 +272,18 @@ class Logist(object):
 
     def _count(self, source, date_from="", date_to="", log_type="", sub_type="", description="", force_refresh=False):
         """
-        Private function to count the matching logs in memory with filters log_type, sub_type and description
+        Private function to count the matching logs in redis with filters log_type, sub_type and description
         :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
         :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
         :param description: brief log description
-        :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
+        :param force_refresh: refresh cached log list in redis calling _analytics_bootstrap()
         :return: None
         """
         if (not(self.log_list and self.log_list_type == "file") and source == "file") or\
                 (source == "file" and force_refresh):
             self._analytics_bootstrap(source="file")
-        if (not(self.log_list and self.log_list_type == "memory") and source == "memory") or \
-                (source == "memory" and force_refresh):
+        if (not(self.log_list and self.log_list_type == "redis") and source == "redis") or \
+                (source == "redis" and force_refresh):
             self._analytics_bootstrap()
         if not date_to:
             date_to = datetime.now()
@@ -296,32 +298,32 @@ class Logist(object):
                 filter_count += 1
         return filter_count
 
-    def count(self, date_from="", date_to="", log_type="", sub_type="", description="", log_source="memory",
+    def count(self, date_from="", date_to="", log_type="", sub_type="", description="", log_source="redis",
               force_refresh=False):
         """
         Function to count the matching logs in last created file with filters log_type, sub_type and description
         :param date_to: filter logs till date_to - datetime object
         :param date_from: filter logs till date_from - datetime object
-        :param log_source: memory/file
+        :param log_source: redis/file
         :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
         :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
         :param description: brief log description
-        :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
+        :param force_refresh: refresh cached log list in redis calling _analytics_bootstrap()
         :return: None
         """
         return self._count(log_source, date_from, date_to, log_type, sub_type, description, force_refresh)
 
-    def filter(self, date_from="", date_to="", log_type="", sub_type="", description="", log_source="memory",
+    def filter(self, date_from="", date_to="", log_type="", sub_type="", description="", log_source="redis",
                force_refresh=False):
         """
         Function to count the matching logs in last created file with filters log_type, sub_type and description
         :param date_to: filter logs till date_to - datetime object
         :param date_from: filter logs till date_from - datetime object
-        :param log_source: memory/file
+        :param log_source: redis/file
         :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
         :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
         :param description: brief log description
-        :param force_refresh : refresh cached log list in memory calling _analytics_bootstrap()
+        :param force_refresh: refresh cached log list in redis calling _analytics_bootstrap()
         :return: None
         """
         return self._filter(log_source, date_from, date_to, log_type, sub_type, description, force_refresh)
