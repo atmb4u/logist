@@ -2,12 +2,12 @@ import random
 from datetime import datetime
 from __init__ import Logist
 
-l = Logist(flush_count=1000000, file_size=10000000)
+l = Logist(flush_count=10000, file_size=10000000, disable_file_flush=True)
 types = ["SUCCESS", "ERROR", "INFO", "WARNING"]
 sub_types = ["ACCESS", "WRITE", "READ", "EDIT", "DELETE"]
 descriptions = ["d1", "d2", "d3", "d4", "d5", "d6"]
 start = datetime.now()
-log_count = 1055000
+log_count = 105500
 for log in xrange(log_count):
     log_type = types[random.randint(0, 3)]
     log_sub_type = sub_types[random.randint(0, 4)]

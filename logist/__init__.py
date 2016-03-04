@@ -10,12 +10,13 @@ except ImportError:
     print "Redis is not Installed"
     exit()
 
-__version__ = "0.95"
+__version__ = "0.96"
 
 
 class Logist(object):
     def __init__(self, redis_address="localhost", redis_port=6379, flush_count=10000, file_size=10000000,
-                 log_file_name="default", log_folder="", namespace="DEFAULT", compression=True):
+                 log_file_name="default", log_folder="", namespace="DEFAULT", compression=True,
+                 disable_file_flush=False):
         """
         # TODO : use memory instead of redis
         REDIS_ADDRESS: Address to redis server
@@ -47,7 +48,7 @@ class Logist(object):
             conf_string = open("logist_config.json", 'r').read()
             config = json.loads(conf_string)
         except (IOError, ValueError):
-            print("Using default configuration. For custom configuration create logist_config.json")
+            # print("Using default configuration. For custom configuration create logist_config.json")
             config = {}
         self.REDIS_ADDRESS = config.get("REDIS_ADDRESS") or redis_address
         self.REDIS_PORT = config.get("REDIS_PORT") or redis_port
@@ -58,6 +59,7 @@ class Logist(object):
         self.NAMESPACE = config.get("NAMESPACE") or namespace
         self.COMPRESSION = config.get("COMPRESSION") or compression
         self.redis_instance = Redis(host=self.REDIS_ADDRESS, port=self.REDIS_PORT)
+        self.DISABLE_FILE_FLUSH = config.get("DISABLE_FILE_FLUSH") or disable_file_flush
         try:
             self.redis_instance.ping()
         except ConnectionError:
@@ -67,22 +69,27 @@ class Logist(object):
         """
         Private function to flush logs to file once redis reaches self.FLUSH_COUNT
         :param force_compress: will forcefully create a new compressed file
+        if DISABLE_FILE_FLUSH is True, will keep triming to flush limit, else
+        dump to the file, and flush the memory. 
         """
         if self.LOG_FOLDER:
             file_location = os.path.join(self.LOG_FOLDER, self.LOG_FILE_NAME)
         else:
             file_location = self.LOG_FILE_NAME
         file_location = "%s.log" % file_location
-        try:
-            file_instance = open(file_location, "a")
-        except IOError:
-            print("Cannot open file: %s" % file_location)
-        redis_dump = "%s\n" % "\n".join(self.redis_instance.lrange(self.NAMESPACE, 0, -1))
-        self.redis_instance.delete(self.NAMESPACE)
-        file_instance.write(redis_dump)
-        file_instance.close()
-        if os.path.getsize(file_location) > self.FILE_SIZE or force_compress:
-            self._f_compress(file_location)
+        if self.DISABLE_FILE_FLUSH:
+            self.redis_instance.ltrim(self.NAMESPACE, 0, self.FLUSH_COUNT - 1)
+        else:
+            redis_dump = "%s\n" % "\n".join(self.redis_instance.lrange(self.NAMESPACE, 0, -1))
+            self.redis_instance.delete(self.NAMESPACE)
+            try:
+                file_instance = open(file_location, "a")
+            except IOError:
+                print("Cannot open file: %s" % file_location)
+            file_instance.write(redis_dump)
+            file_instance.close()
+            if os.path.getsize(file_location) > self.FILE_SIZE or force_compress:
+                self._f_compress(file_location)
         return
 
     def config(self):
@@ -253,11 +260,9 @@ class Logist(object):
         :param force_refresh: refresh cached log list in redis calling _analytics_bootstrap()
         :return: None
         """
-        if (not(self.log_list and self.log_list_type == "file") and source == "file") or\
-                (source == "file" and force_refresh):
+        if (not(self.log_list and self.log_list_type == "file") and source == "file") or (source == "file" and force_refresh):
             self._analytics_bootstrap(source="file")
-        if (not(self.log_list and self.log_list_type == "redis") and source == "redis") or \
-                (source == "redis" and force_refresh):
+        if (not(self.log_list and self.log_list_type == "redis") and source == "redis") or (source == "redis" and force_refresh):
             self._analytics_bootstrap()
         if not date_to:
             date_to = datetime.now()
@@ -265,8 +270,7 @@ class Logist(object):
             date_from = datetime.fromtimestamp(0)
         filter_query = []
         for log in self.log_list:
-            if (log_type in log[1] and sub_type in log[2] and description in log[3]) \
-                    and (date_from < log[0] < date_to):
+            if (log_type in log[1] and sub_type in log[2] and description in log[3]) and (date_from < log[0] < date_to):
                 filter_query.append(log)
         return filter_query
 
@@ -279,11 +283,9 @@ class Logist(object):
         :param force_refresh: refresh cached log list in redis calling _analytics_bootstrap()
         :return: None
         """
-        if (not(self.log_list and self.log_list_type == "file") and source == "file") or\
-                (source == "file" and force_refresh):
+        if (not(self.log_list and self.log_list_type == "file") and source == "file") or (source == "file" and force_refresh):
             self._analytics_bootstrap(source="file")
-        if (not(self.log_list and self.log_list_type == "redis") and source == "redis") or \
-                (source == "redis" and force_refresh):
+        if (not(self.log_list and self.log_list_type == "redis") and source == "redis") or (source == "redis" and force_refresh):
             self._analytics_bootstrap()
         if not date_to:
             date_to = datetime.now()
@@ -293,8 +295,7 @@ class Logist(object):
             self._analytics_bootstrap()
         filter_count = 0
         for log in self.log_list:
-            if (log_type in log[1] and sub_type in log[2] and description in log[3]) \
-                    and (date_from < log[0] < date_to):
+            if (log_type in log[1] and sub_type in log[2] and description in log[3]) and (date_from < log[0] < date_to):
                 filter_count += 1
         return filter_count
 
