@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 import gzip
 import shutil
+import csv
 
 try:
     from redis import Redis, ConnectionError
@@ -328,3 +329,68 @@ class Logist(object):
         :return: None
         """
         return self._filter(log_source, date_from, date_to, log_type, sub_type, description, force_refresh)
+
+    def _export(self, flush=False, filelocation= "",filename="", date_from="", date_to="", log_type="", sub_type="", description="", 
+            log_source="redis", force_refresh=False):
+        """
+        #TODO Flush Data
+        Function to export all availale data to a csv file
+        :param flush : False - detemines to flush exported data
+        :param filename : filename to save data
+        :param date_to: filter logs till date_to - datetime object
+        :param date_from: filter logs till date_from - datetime object
+        :param log_source: redis/file
+        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param force_refresh: refresh cached log list in redis calling _analytics_bootstrap()
+        :return: None
+        """
+
+        self.export_data = self._filter(log_source, date_from, date_to, log_type, sub_type, description, force_refresh)
+
+        if filename:
+            file_name = "%s.csv" % (filename)
+        else:
+            file_name = "%s.csv" % ("export_data")
+
+        if filelocation:
+            filelocation = os.path.join(filelocation, file_name)
+        else:
+            filelocation = file_name
+
+        log_file = open(filelocation, 'w')
+        writer = csv.writer(log_file)
+        for log in self.export_data:
+            writer.writerow(log)
+        log_file.close()
+        return
+
+    def export(self, flush=False, filelocation= "",filename="", date_from="", date_to="", log_type="", sub_type="", description="", 
+            log_source="redis", force_refresh=False):
+        """
+        #TODO Flush Data
+        Function to export all availale data to a csv file
+        :param flush : False - detemines to flush exported data
+        :param filename : filename to save data
+        :param date_to: filter logs till date_to - datetime object
+        :param date_from: filter logs till date_from - datetime object
+        :param log_source: redis/file
+        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param force_refresh: refresh cached log list in redis calling _analytics_bootstrap()
+        :return: None
+        """
+
+        return self._export(flush, filelocation, filename, date_from, date_to, log_type, sub_type, description, log_source, force_refresh)
+
+
+
+
+
+
+
+
+
+
