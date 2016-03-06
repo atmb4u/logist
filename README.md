@@ -87,6 +87,8 @@ NAMESPACE: a custom namespace for logs to be kept in redis server
 
 COMPRESSION: a boolean field to enable/disable compression (True/False)
 
+DISABLE_FILE_FLUSH: a boolean field to enable/disable dumping to a file
+(NB: this will flush all the logs older than FLUSH_COUNT off the memory).
 
 Either, create a configuration file with name ```logist_config.json``` 
 in the pwd, like below
@@ -100,6 +102,7 @@ in the pwd, like below
     "LOG_FILE_NAME": "",
     "LOG_FOLDER": "",
     "NAMESPACE": "PROJECT_NAME",
+    "DISABLE_FILE_FLUSH": false,
     "COMPRESSION": true
 }
 ```
@@ -113,7 +116,8 @@ as shown below
 logger = Logist(redis_address="localhost", redis_port=6379, 
     flush_count=10000, file_size=10000000,
     log_file_name="default", log_folder="", 
-    namespace="DEFAULT", compression=True)
+    namespace="DEFAULT", disable_file_flush=False,
+    compression=True)
 ```
 
 ## Advanced Features
@@ -142,6 +146,7 @@ reload the index from the source file/memory
 logger.count(log_source="memory", date_from="", date_to="", log_type="", 
     sub_type="", description="", log_location="memory", force_refresh=False)
 ```
+
 #### Export
 
 Advanced feature to export logs as required based on log_type, 
