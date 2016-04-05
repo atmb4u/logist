@@ -146,14 +146,3 @@ reload the index from the source file/memory
 logger.count(log_source="memory", date_from="", date_to="", log_type="", 
     sub_type="", description="", log_location="memory", force_refresh=False)
 ```
-
-#### Export
-
-Advanced feature to export logs as required based on log_type, 
-sub_type, description and log_location. force_refresh is used to 
-reload the index from the source file/memory
-
-```python
-logger.count(filelocation="", filename="", log_source="memory", date_from="", date_to="", log_type="", 
-    sub_type="", description="", log_location="memory", force_refresh=False)
-```

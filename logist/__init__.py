@@ -11,7 +11,7 @@ except ImportError:
     print "Redis is not Installed"
     exit()
 
-__version__ = "0.96"
+__version__ = "0.97"
 
 
 class Logist(object):
@@ -85,10 +85,10 @@ class Logist(object):
             self.redis_instance.delete(self.NAMESPACE)
             try:
                 file_instance = open(file_location, "a")
+                file_instance.write(redis_dump)
+                file_instance.close()
             except IOError:
                 print("Cannot open file: %s" % file_location)
-            file_instance.write(redis_dump)
-            file_instance.close()
             if os.path.getsize(file_location) > self.FILE_SIZE or force_compress:
                 self._f_compress(file_location)
         return
