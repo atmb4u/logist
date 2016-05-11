@@ -361,9 +361,13 @@ class Logist(object):
 
         log_file = open(filelocation, 'w')
         writer = csv.writer(log_file)
+        print self.export_data
         for log in self.export_data:
             writer.writerow(log)
         log_file.close()
+
+        self._delete_data(date_from, date_to, log_type, sub_type, description, log_source, force_refresh)
+
         return
 
     def export(self, flush=False, filelocation= "",filename="", date_from="", date_to="", log_type="", sub_type="", description="", 
@@ -381,11 +385,32 @@ class Logist(object):
         :param description: brief log description
         :param force_refresh: refresh cached log list in redis calling _analytics_bootstrap()
         :return: None
-        """
+        """ 
 
         return self._export(flush, filelocation, filename, date_from, date_to, log_type, sub_type, description, log_source, force_refresh)
 
+    def _delete_data(self, date_from, date_to, log_type, sub_type, description, log_source, force_refresh):
+        """
+        :param log_source: redis/file
+        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        """
+        append_list = []
 
+        logs_redis = self.redis_instance.lrange(self.NAMESPACE, 0, -1)
+        for log in logs_redis:
+            log_time = datetime.strptime(log.split(" ><")[0], "%Y-%m-%dT%H:%M:%SZ")
+            log_type_re = log.split(">< ")[1].split(" :: ")[0]
+            sub_type_re = log.split(":: ")[1].split(" || ")[0]
+            description_re = log.split("|| ")[1]
+            date_to_time = date_to if date_to else datetime.now()
+            if log_type_re == log_type or sub_type_re == sub_type or description_re == description or (date_from < log_time < date_to_time):
+                self.redis_instance.lrem(self.NAMESPACE,log)
+                append_list.append(log)
+
+        print append_list
+        return
 
 
 
