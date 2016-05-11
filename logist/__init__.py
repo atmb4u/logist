@@ -230,6 +230,7 @@ class Logist(object):
         """
         # TODO - analytics is not available over compressed files for now
         self.log_list = []
+        log_source = []
         if source == "file":
             self.log_list_type = "file"
             if self.LOG_FOLDER:
@@ -408,7 +409,7 @@ class Logist(object):
             if log_type_re == log_type or sub_type_re == sub_type or description_re == description or (date_from < log_time < date_to_time):
                 self.redis_instance.lrem(self.NAMESPACE,log)
                 append_list.append(log)
-
+        import ipdb;ipdb.set_trace()
         print append_list
         return
 
