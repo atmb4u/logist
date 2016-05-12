@@ -411,11 +411,3 @@ class Logist(object):
                 append_list.append(log)
 
         return
-
-
-
-
-
-
-
-
