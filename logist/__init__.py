@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 import gzip
 import shutil
+import csv
 
 try:
     from redis import Redis, ConnectionError
@@ -10,7 +11,7 @@ except ImportError:
     print "Redis is not Installed"
     exit()
 
-__version__ = "0.96"
+__version__ = "0.97"
 
 
 class Logist(object):
@@ -84,10 +85,10 @@ class Logist(object):
             self.redis_instance.delete(self.NAMESPACE)
             try:
                 file_instance = open(file_location, "a")
+                file_instance.write(redis_dump)
+                file_instance.close()
             except IOError:
                 print("Cannot open file: %s" % file_location)
-            file_instance.write(redis_dump)
-            file_instance.close()
             if os.path.getsize(file_location) > self.FILE_SIZE or force_compress:
                 self._f_compress(file_location)
         return
@@ -229,6 +230,7 @@ class Logist(object):
         """
         # TODO - analytics is not available over compressed files for now
         self.log_list = []
+        log_source = []
         if source == "file":
             self.log_list_type = "file"
             if self.LOG_FOLDER:
@@ -328,3 +330,84 @@ class Logist(object):
         :return: None
         """
         return self._filter(log_source, date_from, date_to, log_type, sub_type, description, force_refresh)
+
+    def _export(self, flush=False, filelocation= "",filename="", date_from="", date_to="", log_type="", sub_type="", description="", 
+            log_source="redis", force_refresh=False):
+        """
+        #TODO Flush Data
+        Function to export all availale data to a csv file
+        :param flush : False - detemines to flush exported data
+        :param filename : filename to save data
+        :param date_to: filter logs till date_to - datetime object
+        :param date_from: filter logs till date_from - datetime object
+        :param log_source: redis/file
+        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param force_refresh: refresh cached log list in redis calling _analytics_bootstrap()
+        :return: None
+        """
+
+        self.export_data = self._filter(log_source, date_from, date_to, log_type, sub_type, description, force_refresh)
+
+        if filename:
+            file_name = "%s.csv" % (filename)
+        else:
+            file_name = "%s.csv" % ("export_data")
+
+        if filelocation:
+            filelocation = os.path.join(filelocation, file_name)
+        else:
+            filelocation = file_name
+
+        log_file = open(filelocation, 'w')
+        writer = csv.writer(log_file)
+        print self.export_data
+        for log in self.export_data:
+            writer.writerow(log)
+        log_file.close()
+
+        self._delete_data(date_from, date_to, log_type, sub_type, description, log_source, force_refresh)
+
+        return
+
+    def export(self, flush=False, filelocation= "",filename="", date_from="", date_to="", log_type="", sub_type="", description="", 
+            log_source="redis", force_refresh=False):
+        """
+        #TODO Flush Data
+        Function to export all availale data to a csv file
+        :param flush : False - detemines to flush exported data
+        :param filename : filename to save data
+        :param date_to: filter logs till date_to - datetime object
+        :param date_from: filter logs till date_from - datetime object
+        :param log_source: redis/file
+        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        :param force_refresh: refresh cached log list in redis calling _analytics_bootstrap()
+        :return: None
+        """ 
+
+        return self._export(flush, filelocation, filename, date_from, date_to, log_type, sub_type, description, log_source, force_refresh)
+
+    def _delete_data(self, date_from, date_to, log_type, sub_type, description, log_source, force_refresh):
+        """
+        :param log_source: redis/file
+        :param log_type: type of log - ERROR, WARNING, SUCCESS, INFO, DEBUG
+        :param sub_type: custom log sub types for easy tracking - Eg: ACCESS, WRITE, READ, EDIT, DELETE
+        :param description: brief log description
+        """
+        append_list = []
+
+        logs_redis = self.redis_instance.lrange(self.NAMESPACE, 0, -1)
+        for log in logs_redis:
+            log_time = datetime.strptime(log.split(" ><")[0], "%Y-%m-%dT%H:%M:%SZ")
+            log_type_re = log.split(">< ")[1].split(" :: ")[0]
+            sub_type_re = log.split(":: ")[1].split(" || ")[0]
+            description_re = log.split("|| ")[1]
+            date_to_time = date_to if date_to else datetime.now()
+            if log_type_re == log_type or sub_type_re == sub_type or description_re == description or (date_from < log_time < date_to_time):
+                self.redis_instance.lrem(self.NAMESPACE,log)
+                append_list.append(log)
+
+        return
