@@ -35,7 +35,7 @@ class Logist(object):
             "REDIS_ADDRESS": "localhost",
             "REDIS_PORT": 6379,
             "FLUSH_COUNT": 10000,
-            "FILE_SIZE": 10000000,
+            "FILE_SIZE": 1000000000,
             "LOG_FILE_NAME": "",
             "LOG_FOLDER": "",
             "NAMESPACE": "PROJECT_NAME",
