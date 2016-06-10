@@ -11,7 +11,7 @@ except ImportError:
     print "Redis is not Installed"
     exit()
 
-__version__ = "0.99"
+__version__ = "0.99.1"
 
 
 class Logist(object):
