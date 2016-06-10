@@ -15,7 +15,7 @@ __version__ = "0.98"
 
 
 class Logist(object):
-    def __init__(self, redis_address="localhost", redis_port=6379, flush_count=10000, file_size=10000000,
+    def __init__(self, redis_address="localhost", redis_port=6379, flush_count=10000, file_size=1000000000,
                  log_file_name="default", log_folder="", namespace="DEFAULT", compression=True,
                  disable_file_flush=False):
         """
